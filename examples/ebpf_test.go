@@ -123,7 +123,7 @@ func newEBPFExporter(e e2e.Environment, config string) e2e.Runnable {
 	}
 
 	return f.Init(e2e.StartOptions{
-		Image:        "ebpf_exporter:v1.2.3",
+		Image:        "ebpf_exporter:v1.2.3-5.11.0-7620-generic", // Unfortunately image is kernel specifc, change it on your machine to make it work.
 		Command:      e2e.NewCommand("--config.file", filepath.Join(f.InternalDir(), "config.yml")),
 		Privileged:   true,
 		Capabilities: []e2e.RunnableCapabilities{e2e.RunnableCapabilitiesSysAdmin},
