@@ -27,7 +27,7 @@ func TestExample(t *testing.T) {
 	t.Cleanup(e.Close)
 
 	// Start epbf exporter.
-	exporter := newEBPFExporter(e, ebpCPUMonitoring)
+	exporter := newEBPFExporter(e, eBPFExporterConfig(t))
 	testutil.Ok(t, e2e.StartAndWaitReady(exporter))
 
 	// Create structs for Prometheus containers scraping itself.
@@ -44,54 +44,52 @@ func TestExample(t *testing.T) {
 }
 
 func eBPFExporterConfig(t *testing.T) config.Config {
-	c := config.Config{
-		Programs: []config.Program{},
+	return config.Config{
+		Programs: []config.Program{
+			{
+				Name: "ipcstat",
+				Metrics: config.Metrics{
+					Counters: []config.Counter{
+						{
+							Name:  "cpu_instructions_total",
+							Help:  "Instructions retired by CPUs",
+							Table: "instructions",
+							Labels: []config.Label{
+								{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
+							},
+						},
+						{
+							Name:  "cpu_cycles_total",
+							Help:  "Cycles processed by CPUs",
+							Table: "cycles",
+							Labels: []config.Label{
+								{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
+							},
+						},
+					},
+				},
+				PerfEvents: []config.PerfEvent{
+					{
+						Type:            0x0, // HARDWARE
+						Name:            0x1, // PERF_COUNT_HW_INSTRUCTIONS
+						Target:          "on_cpu_instruction",
+						SampleFrequency: 99,
+					},
+					{
+						Type:            0x0, // HARDWARE
+						Name:            0x1, // PERF_COUNT_HW_CPU_CYCLES
+						Target:          "on_cpu_cycle",
+						SampleFrequency: 99,
+					},
+				},
+				Code: func() string {
+					b, err := ioutil.ReadFile("../ipcstat.c")
+					testutil.Ok(t, err)
+					return string(b)
+				}(),
+			},
+		},
 	}
-	const ebpCPUMonitoring = `programs:
-  # See:
-  - name: ipcstat
-    metrics:
-      counters:
-        - name: cpu_instructions_total
-          help: Instructions retired by CPUs
-          table: instructions
-          labels:
-            - name: cpu
-              size: 4
-              decoders:
-                - name: uint
-        - name: cpu_cycles_total
-          help: Cycles processed by CPUs
-          table: cycles
-          labels:
-            - name: cpu
-              size: 4
-              decoders:
-                - name: uint
-    perf_events:
-      - type: 0x0 # HARDWARE
-        name: 0x1 # PERF_COUNT_HW_INSTRUCTIONS
-        target: on_cpu_instruction
-        sample_frequency: 99
-      - type: 0x0 # HARDWARE
-        name: 0x0 # PERF_COUNT_HW_CPU_CYCLES
-        target: on_cpu_cycle
-        sample_frequency: 99
-    code: |
-      #include <linux/ptrace.h>
-      #include <uapi/linux/bpf_perf_event.h>
-      const int max_cpus = 128;
-      BPF_ARRAY(instructions, u64, max_cpus);
-      BPF_ARRAY(cycles, u64, max_cpus);
-      int on_cpu_instruction(struct bpf_perf_event_data *ctx) {
-          instructions.increment(bpf_get_smp_processor_id(), ctx->sample_period);
-          return 0;
-      }
-      int on_cpu_cycle(struct bpf_perf_event_data *ctx) {
-          cycles.increment(bpf_get_smp_processor_id(), ctx->sample_period);
-          return 0;
-      }
-`
 }
 
 func injectPrometheusConfig(p *e2edb.Prometheus, exporter e2e.Runnable) error {
