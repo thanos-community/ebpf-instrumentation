@@ -32,8 +32,5 @@ RUN git clone --depth=1 https://github.com/cloudflare/ebpf_exporter.git /root/eb
 
 RUN cd /root/ebpf_exporter && GOPATH="" GOPROXY="off" GOFLAGS="-mod=vendor" go build -v ./cmd/ebpf_exporter/... && ls -l .
 
-ARG PPA_KERNEL_HEADERS
-
-RUN add-apt-repository $PPA_KERNEL_HEADERS && apt-get install -y --no-install-recommends linux-headers-$(uname -r)
-
+# Make sure to share /lib/modules:/lib/modules:ro volume on start for your linux headers.
 ENTRYPOINT ["/root/ebpf_exporter/ebpf_exporter"]

@@ -41,10 +41,8 @@ all: format build
 
 .PHONY: docker
 docker:
-	@echo ">> build ebpf exporter docker for $(shell uname -r) kernel"
-	# My own kernel is only on Pop OS ppa.
-	# NOTE: It's up to you to find ppa that holds your version of kernel.
-	@cd exporter && docker build --build-arg PPA_KERNEL_HEADERS=ppa:system76/pop -t ebpf_exporter:v1.2.3-$(shell uname -r) .
+	@echo ">> build ebpf exporter docker"
+	@cd exporter && docker build -t ebpf_exporter:v1.2.3-generic .
 
 .PHONY: build
 build: ## Build all modules

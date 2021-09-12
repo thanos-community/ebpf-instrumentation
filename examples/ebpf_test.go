@@ -133,10 +133,11 @@ func newEBPFExporter(e e2e.Environment, config config.Config) e2e.Runnable {
 	}
 
 	return f.Init(e2e.StartOptions{
-		Image:        "ebpf_exporter:v1.2.3-5.11.0-7620-generic", // Unfortunately image is kernel specifc, change it on your machine to make it work.
+		Image:        "ebpf_exporter:v1.2.3-generic", // Unfortunately image is kernel specifc, change it on your machine to make it work.
 		Command:      e2e.NewCommand("--config.file", filepath.Join(f.InternalDir(), "config.yml")),
 		Privileged:   true,
 		Capabilities: []e2e.RunnableCapabilities{e2e.RunnableCapabilitiesSysAdmin},
 		Readiness:    e2e.NewHTTPReadinessProbe("http", "/metrics", 200, 200),
+		Volumes:      []string{"/lib/modules:/lib/modules:ro", "/etc/localtime:/etc/localtime:ro"},
 	})
 }
