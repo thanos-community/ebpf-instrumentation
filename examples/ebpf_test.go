@@ -42,9 +42,7 @@ func TestExample(t *testing.T) {
 
 	// To ensure Prometheus scraped already something ensure number of scrapes.
 	testutil.Ok(t, p.WaitSumMetrics(e2e.Greater(50), "prometheus_tsdb_head_samples_appended_total"))
-	testutil.Ok(t, e2einteractive.OpenInBrowser("http://"+p.Endpoint("http")+"/graph?g0.expr=prometheus_http_requests_total%7Bhandler%3D~\"%2Fapi%2Fv1%2Fquery.*\"%7D&g0.tab=0&g0.stacked=0&g0.range_input=30m&g1.expr=prometheus_http_request_duration_seconds_bucket%7Bhandler%3D~\"%2Fapi%2Fv1%2Fquery.*\"%7D&g1.tab=0&g1.stacked=0&g1.range_input=30m&g2.expr=ebpf_exporter_http_requests_started_total&g2.tab=0&g2.stacked=0&g2.range_input=30m&g3.expr=ebpf_exporter_http_requests_total&g3.tab=0&g3.stacked=0&g3.range_input=30m"))
-
-	// TODO: Create "dashboard".
+	testutil.Ok(t, e2einteractive.OpenInBrowser("http://"+p.Endpoint("http")+"/graph?g0.expr=prometheus_http_requests_total%7Bhandler%3D~%22%2Fapi%2Fv1%2Fquery.*%22%7D&g0.tab=0&g0.stacked=0&g0.range_input=30m&g1.expr=prometheus_http_request_duration_seconds_bucket%7Bhandler%3D~%22%2Fapi%2Fv1%2Fquery.*%22%7D&g1.tab=0&g1.stacked=0&g1.range_input=30m&g2.expr=ebpf_exporter_http_requests_started_total&g2.tab=0&g2.stacked=0&g2.range_input=30m&g3.expr=ebpf_exporter_http_requests_total&g3.tab=0&g3.stacked=0&g3.range_input=30m"))
 	testutil.Ok(t, e2einteractive.RunUntilEndpointHit())
 }
 
@@ -88,49 +86,6 @@ func eBPFExporterConfig(t *testing.T) config.Config {
 
 				Code: func() string {
 					b, err := ioutil.ReadFile("../http_red_monitoring_kprobes.h")
-					testutil.Ok(t, err)
-					return string(b)
-				}(),
-			},
-			{
-				// Example program.
-				Name: "ipcstat",
-				Metrics: config.Metrics{
-					Counters: []config.Counter{
-						{
-							Name:  "cpu_instructions_total",
-							Help:  "Instructions retired by CPUs",
-							Table: "instructions",
-							Labels: []config.Label{
-								{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
-							},
-						},
-						{
-							Name:  "cpu_cycles_total",
-							Help:  "Cycles processed by CPUs",
-							Table: "cycles",
-							Labels: []config.Label{
-								{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
-							},
-						},
-					},
-				},
-				PerfEvents: []config.PerfEvent{
-					{
-						Type:            0x0, // HARDWARE
-						Name:            0x1, // PERF_COUNT_HW_INSTRUCTIONS
-						Target:          "on_cpu_instruction",
-						SampleFrequency: 99,
-					},
-					{
-						Type:            0x0, // HARDWARE
-						Name:            0x1, // PERF_COUNT_HW_CPU_CYCLES
-						Target:          "on_cpu_cycle",
-						SampleFrequency: 99,
-					},
-				},
-				Code: func() string {
-					b, err := ioutil.ReadFile("../cpu_ipcstat.h")
 					testutil.Ok(t, err)
 					return string(b)
 				}(),
@@ -189,7 +144,6 @@ func newEBPFExporter(e e2e.Environment, config config.Config) e2e.Runnable {
 			"/lib/modules:/lib/modules:ro",        // This takes your own headers, make sure you install them using `apt-get install linux-headers-$(uname -r)` on ubuntu.
 			"/sys/kernel/debug:/sys/kernel/debug", // Required for tracepoints to work.
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",    // This is required for cgroup decoder to work.
-			//"/etc/localtime:/etc/localtime:ro",
 		},
 	})
 }
