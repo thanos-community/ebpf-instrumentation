@@ -42,7 +42,7 @@ all: format build
 .PHONY: docker
 docker:
 	@echo ">> build ebpf exporter docker"
-	@cd exporter && docker build -t ebpf_exporter:v1.2.3-generic .
+	@cd exporter && docker build -t ebpf_exporter:v1.2.3-ubuntu-generic .
 
 .PHONY: build
 build: ## Build all modules

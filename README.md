@@ -13,3 +13,6 @@
 * https://www.brendangregg.com/Perf/bcc_tracing_tools.png
 * https://github.com/iovisor/bcc/tree/master/tools
 * https://blog.px.dev/ebpf-http-tracing/
+* https://qmo.fr/docs/talk_20200202_debugging_ebpf.pdf
+* https://nakryiko.com/posts/bpf-tips-printk/
+* https://github.com/libbpf/libbpf
