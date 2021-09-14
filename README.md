@@ -15,3 +15,6 @@
 * https://blog.px.dev/ebpf-http-tracing/
 * https://qmo.fr/docs/talk_20200202_debugging_ebpf.pdf
 * https://www.kernel.org/doc/html/v5.11/trace/events.html
+* https://stackoverflow.com/a/47991968/3220609
+* https://linux.die.net/man/2/accept4
+* http://www.scs.stanford.edu/06au-cs240/notes/l3.pdf

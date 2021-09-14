@@ -42,8 +42,7 @@ func TestExample(t *testing.T) {
 
 	// To ensure Prometheus scraped already something ensure number of scrapes.
 	testutil.Ok(t, p.WaitSumMetrics(e2e.Greater(50), "prometheus_tsdb_head_samples_appended_total"))
-
-	testutil.Ok(t, e2einteractive.OpenInBrowser("http://"+p.Endpoint("http")))
+	testutil.Ok(t, e2einteractive.OpenInBrowser("http://"+p.Endpoint("http")+"/graph?g0.expr=prometheus_http_requests_total%7Bhandler%3D~\"%2Fapi%2Fv1%2Fquery.*\"%7D&g0.tab=0&g0.stacked=0&g0.range_input=30m&g1.expr=prometheus_http_request_duration_seconds_bucket%7Bhandler%3D~\"%2Fapi%2Fv1%2Fquery.*\"%7D&g1.tab=0&g1.stacked=0&g1.range_input=30m&g2.expr=ebpf_exporter_http_requests_started_total&g2.tab=0&g2.stacked=0&g2.range_input=30m&g3.expr=ebpf_exporter_http_requests_total&g3.tab=0&g3.stacked=0&g3.range_input=30m"))
 
 	// TODO: Create "dashboard".
 	testutil.Ok(t, e2einteractive.RunUntilEndpointHit())
@@ -57,20 +56,34 @@ func eBPFExporterConfig(t *testing.T) config.Config {
 				Metrics: config.Metrics{
 					Counters: []config.Counter{
 						{
+							Name:  "http_requests_started_total",
+							Help:  "Total number of HTTP requests started by cgroup",
+							Table: "requests_started_total",
+							Labels: []config.Label{
+								{Name: "cgroup", Size: 8, Decoders: []config.Decoder{
+									{Name: "uint"},
+									{Name: "cgroup"}, // Decode cgroup ID to path for easier correlation with containers.
+								}},
+							},
+						},
+						{
 							Name:  "http_requests_total",
 							Help:  "Total number of HTTP requests handled by cgroup",
 							Table: "requests_total",
 							Labels: []config.Label{
 								{Name: "cgroup", Size: 8, Decoders: []config.Decoder{
 									{Name: "uint"},
-									{Name: "cgroup"},
+									{Name: "cgroup"}, // Decode cgroup ID to path for easier correlation with containers.
 								}},
 							},
 						},
 					},
 				},
-				Kprobes: map[string]string{
-					"syscalls:sys_enter_accept4": "syscall__sys_enter_accept4",
+				Tracepoints: map[string]string{
+					"syscalls:sys_enter_accept4": "tracepoint__syscalls__sys_enter_accept4",
+					"syscalls:sys_exit_accept4":  "tracepoint__syscalls__sys_exit_accept4",
+					"syscalls:sys_enter_write":   "tracepoint__syscalls__sys_enter_write",
+					"syscalls:sys_enter_close":   "tracepoint__syscalls__sys_enter_close",
 				},
 
 				Code: func() string {
@@ -173,9 +186,10 @@ func newEBPFExporter(e e2e.Environment, config config.Config) e2e.Runnable {
 		Capabilities: []e2e.RunnableCapabilities{e2e.RunnableCapabilitiesSysAdmin},
 		Readiness:    e2e.NewHTTPReadinessProbe("http", "/metrics", 200, 200),
 		Volumes: []string{
-			"/lib/modules:/lib/modules:ro", // This takes you own headers, makes sure you install them using `apt-get install linux-headers-$(uname -r)` on ubuntu.
-			"/sys/kernel/debug:/sys/kernel/debug",
-			"/etc/localtime:/etc/localtime:ro",
+			"/lib/modules:/lib/modules:ro",        // This takes your own headers, make sure you install them using `apt-get install linux-headers-$(uname -r)` on ubuntu.
+			"/sys/kernel/debug:/sys/kernel/debug", // Required for tracepoints to work.
+			"/sys/fs/cgroup:/sys/fs/cgroup:ro",    // This is required for cgroup decoder to work.
+			//"/etc/localtime:/etc/localtime:ro",
 		},
 	})
 }

@@ -6,68 +6,70 @@
 #include <linux/stat.h>
 #include <linux/socket.h>
 
-BPF_HASH(requests_total, u64);
+BPF_HASH(requests_started_total, u64);
+BPF_HASH(requests_total, u64); // TODO(bwplotka): Add status code, and path.
 
 struct addr_info_t {
   struct sockaddr *addr;
   int *addrlen;
 };
 
-#define MAX_MSG_SIZE 1024
-BPF_PERF_OUTPUT(syscall_write_events);
+// The set of file descriptors we are tracking. In our case those are connections from accept.
+BPF_HASH(tracked_fds, u64, bool);
 
 // Tracks struct addr_info so we can map between entry and exit.
-BPF_HASH(active_sock_addr, u64, struct addr_info_t);
-// This function stores the address to the sockaddr struct in the active_sock_addr map.
 // The key is the current pid/tgid.
+BPF_HASH(active_sock_addr, u64, struct addr_info_t);
 
-/*
-sudo cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_accept4/format
-name: sys_enter_accept4
-ID: 1434
-format:
-	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
-	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
-	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
-	field:int common_pid;	offset:4;	size:4;	signed:1;
+// Generates function tracepoint__syscalls__sys_enter_accept4
+// args is from /sys/kernel/debug/tracing/events/syscalls/sys_enter_accept4/format
+TRACEPOINT_PROBE(syscalls, sys_enter_accept4) {
+    u64 id = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
 
-	field:int __syscall_nr;	offset:8;	size:4;	signed:1;
-	field:int fd;	offset:16;	size:8;	signed:0;
-	field:struct sockaddr * upeer_sockaddr;	offset:24;	size:8;	signed:0;
-	field:int * upeer_addrlen;	offset:32;	size:8;	signed:0;
-	field:int flags;	offset:40;	size:8;	signed:0;
-*/
+//   struct addr_info_t addr_info;
+//   addr_info.addr = args->upeer_sockaddr;
+//   addr_info.addrlen = args->upeer_addrlen;
+//   active_sock_addr.update(&id, &addr_info);
 
-// syscall__ is a special prefix that creates a kprobe for the system call name provided as the remainder.
-int syscall__sys_enter_accept4(struct pt_regs *ctx, int fd, struct sockaddr *addr, int *addrlen, int flags) {
-  u64 id = bpf_get_current_pid_tgid();
-  u32 pid = id >> 32;
-
- bpf_trace_printk("accept-entry");
-  struct addr_info_t addr_info;
-  addr_info.addr = addr;
-  addr_info.addrlen = addrlen;
-  active_sock_addr.update(&id, &addr_info);
-  return 0;
+    // bpf_trace_printk("accept %d\\n", bpf_get_current_cgroup_id());
+    return 0;
 }
 
-//// Read the sockaddr values and write to the output buffer.
-//int syscall__sys_exit_accept4(struct pt_regs *syscallnum, int fd, struct sockaddr *addr, size_t *addrlen, int flags) {
+
+// Read the sockaddr values and write to the output buffer.
+TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
+    // The file descriptor is the value returned from the syscall.
+    u64 fd = (u64)args->ret; // Somehow return argument is long type in my kernel.
+        if (fd < 0) {
+            return 0;
+        }
+
+        bool t = true;
+        tracked_fds.update(&fd, &t);
+
+        requests_started_total.increment((u64) bpf_get_current_cgroup_id());
+
 //  u64 id = bpf_get_current_pid_tgid();
 //  u32 pid = id >> 32;
 //  bpf_trace_printk("accept");
 //  active_sock_addr.delete(&id);
-//  return 0;
-//}
-//
-//int syscall__sys_enter_write(struct pt_regs *syscallnum, int fd, const void* buf, size_t count) {
-//  bpf_trace_printk("write");
-//  return 0;
-//}
-//
-//int syscall__sys_enter_close(struct pt_regs *syscallnum, int fd) {
-//  u64 id = bpf_get_current_pid_tgid();
-//  u32 pid = id >> 32;
-//  bpf_trace_printk("close");
-//  return 0;
-//}
+  return 0;
+}
+
+TRACEPOINT_PROBE(syscalls, sys_enter_write) {
+    u64 fd = args->fd;
+    if (tracked_fds.lookup(&fd) == NULL) {
+        return 0;
+    }
+    // bpf_trace_printk("write");
+    requests_total.increment((u64) bpf_get_current_cgroup_id());
+    return 0;
+}
+
+TRACEPOINT_PROBE(syscalls, sys_enter_close) {
+    //    tracked_fds.delete(&(args->fd));
+
+    //bpf_trace_printk("close");
+    return 0;
+}
