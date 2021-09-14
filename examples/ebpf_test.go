@@ -72,6 +72,7 @@ func eBPFExporterConfig(t *testing.T) config.Config {
 				Kprobes: map[string]string{
 					"syscalls:sys_enter_accept4": "syscall__sys_enter_accept4",
 				},
+
 				Code: func() string {
 					b, err := ioutil.ReadFile("../http_red_monitoring_kprobes.h")
 					testutil.Ok(t, err)

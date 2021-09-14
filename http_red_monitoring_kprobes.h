@@ -37,7 +37,9 @@ format:
 	field:int * upeer_addrlen;	offset:32;	size:8;	signed:0;
 	field:int flags;	offset:40;	size:8;	signed:0;
 */
-int syscall__sys_enter_accept4(int __syscallnum, int fd, struct sockaddr *addr, int *addrlen, int flags) {
+
+// syscall__ is a special prefix that creates a kprobe for the system call name provided as the remainder.
+int syscall__sys_enter_accept4(struct pt_regs *ctx, int fd, struct sockaddr *addr, int *addrlen, int flags) {
   u64 id = bpf_get_current_pid_tgid();
   u32 pid = id >> 32;
 
@@ -49,23 +51,23 @@ int syscall__sys_enter_accept4(int __syscallnum, int fd, struct sockaddr *addr, 
   return 0;
 }
 
-// Read the sockaddr values and write to the output buffer.
-int syscall__sys_exit_accept4(int __syscallnum, int fd, struct sockaddr *addr, size_t *addrlen, int flags) {
-  u64 id = bpf_get_current_pid_tgid();
-  u32 pid = id >> 32;
-  bpf_trace_printk("accept");
-  active_sock_addr.delete(&id);
-  return 0;
-}
-
-int syscall__sys_enter_write(int __syscallnum, int fd, const void* buf, size_t count) {
-  bpf_trace_printk("write");
-  return 0;
-}
-
-int syscall__sys_enter_close(int __syscallnum, int fd) {
-  u64 id = bpf_get_current_pid_tgid();
-  u32 pid = id >> 32;
-  bpf_trace_printk("close");
-  return 0;
-}
+//// Read the sockaddr values and write to the output buffer.
+//int syscall__sys_exit_accept4(struct pt_regs *syscallnum, int fd, struct sockaddr *addr, size_t *addrlen, int flags) {
+//  u64 id = bpf_get_current_pid_tgid();
+//  u32 pid = id >> 32;
+//  bpf_trace_printk("accept");
+//  active_sock_addr.delete(&id);
+//  return 0;
+//}
+//
+//int syscall__sys_enter_write(struct pt_regs *syscallnum, int fd, const void* buf, size_t count) {
+//  bpf_trace_printk("write");
+//  return 0;
+//}
+//
+//int syscall__sys_enter_close(struct pt_regs *syscallnum, int fd) {
+//  u64 id = bpf_get_current_pid_tgid();
+//  u32 pid = id >> 32;
+//  bpf_trace_printk("close");
+//  return 0;
+//}
