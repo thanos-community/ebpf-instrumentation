@@ -52,49 +52,32 @@ func TestExample(t *testing.T) {
 func eBPFExporterConfig(t *testing.T) config.Config {
 	return config.Config{
 		Programs: []config.Program{
-			//{
-			//	Name: "http_red_monitoring_kprobes",
-			//	Metrics: config.Metrics{
-			//		Counters: []config.Counter{
-			//			{
-			//				Name:  "cpu_instructions_total",
-			//				Help:  "Instructions retired by CPUs",
-			//				Table: "instructions",
-			//				Labels: []config.Label{
-			//					{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
-			//				},
-			//			},
-			//			{
-			//				Name:  "cpu_cycles_total",
-			//				Help:  "Cycles processed by CPUs",
-			//				Table: "cycles",
-			//				Labels: []config.Label{
-			//					{Name: "cpu", Size: 4, Decoders: []config.Decoder{{Name: "uint"}}},
-			//				},
-			//			},
-			//		},
-			//	},
-			//	Kprobes: map[string]string{},
-			//	PerfEvents: []config.PerfEvent{
-			//		{
-			//			Type:            0x0, // HARDWARE
-			//			Name:            0x1, // PERF_COUNT_HW_INSTRUCTIONS
-			//			Target:          "on_cpu_instruction",
-			//			SampleFrequency: 99,
-			//		},
-			//		{
-			//			Type:            0x0, // HARDWARE
-			//			Name:            0x1, // PERF_COUNT_HW_CPU_CYCLES
-			//			Target:          "on_cpu_cycle",
-			//			SampleFrequency: 99,
-			//		},
-			//	},
-			//	Code: func() string {
-			//		b, err := ioutil.ReadFile("../http_red_monitoring_kprobes.c")
-			//		testutil.Ok(t, err)
-			//		return string(b)
-			//	}(),
-			//},
+			{
+				Name: "http_red_monitoring_kprobes",
+				Metrics: config.Metrics{
+					Counters: []config.Counter{
+						{
+							Name:  "http_requests_total",
+							Help:  "Total number of HTTP requests handled by cgroup",
+							Table: "requests_total",
+							Labels: []config.Label{
+								{Name: "cgroup", Size: 8, Decoders: []config.Decoder{
+									{Name: "uint"},
+									{Name: "cgroup"},
+								}},
+							},
+						},
+					},
+				},
+				Kprobes: map[string]string{
+					"syscalls:sys_enter_accept4": "syscall__sys_enter_accept4",
+				},
+				Code: func() string {
+					b, err := ioutil.ReadFile("../http_red_monitoring_kprobes.h")
+					testutil.Ok(t, err)
+					return string(b)
+				}(),
+			},
 			{
 				// Example program.
 				Name: "ipcstat",
@@ -173,10 +156,6 @@ scrape_configs:
 func newEBPFExporter(e e2e.Environment, config config.Config) e2e.Runnable {
 	f := e2e.NewInstrumentedRunnable(e, "ebpf_exporter", map[string]int{"http": 9435}, "http")
 
-	for i := range config.Programs {
-		config.Programs[i].Cflags = append(config.Programs[i].Cflags, "-I"+filepath.Join(f.InternalDir(), "include"))
-	}
-
 	b, err := yaml.Marshal(config)
 	if err != nil {
 		return e2e.NewErrorer("ebpf_exporter", err)
@@ -186,17 +165,17 @@ func newEBPFExporter(e e2e.Environment, config config.Config) e2e.Runnable {
 		return e2e.NewErrorer("ebpf_exporter", err)
 	}
 
-	if err := copyDirs("../include", filepath.Join(f.Dir(), "include")); err != nil {
-		return e2e.NewErrorer("ebpf_exporter", err)
-	}
-
 	return f.Init(e2e.StartOptions{
 		Image:        "ebpf_exporter:v1.2.3-ubuntu-generic", // Unfortunately image is OS specific, change it on your machine to make it work.
 		Command:      e2e.NewCommand("--config.file", filepath.Join(f.InternalDir(), "config.yml")),
 		Privileged:   true,
 		Capabilities: []e2e.RunnableCapabilities{e2e.RunnableCapabilitiesSysAdmin},
 		Readiness:    e2e.NewHTTPReadinessProbe("http", "/metrics", 200, 200),
-		Volumes:      []string{"/lib/modules:/lib/modules:ro", "/etc/localtime:/etc/localtime:ro"}, // This takes you own headers, makes sure you install them using `apt-get install linux-headers-$(uname -r)` on ubuntu.
+		Volumes: []string{
+			"/lib/modules:/lib/modules:ro", // This takes you own headers, makes sure you install them using `apt-get install linux-headers-$(uname -r)` on ubuntu.
+			"/sys/kernel/debug:/sys/kernel/debug",
+			"/etc/localtime:/etc/localtime:ro",
+		},
 	})
 }
 
