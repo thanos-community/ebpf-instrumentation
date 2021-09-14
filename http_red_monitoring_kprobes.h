@@ -5,14 +5,22 @@
 #include <linux/fs.h>
 #include <linux/stat.h>
 #include <linux/socket.h>
+#include <linux/stdlib.h>
 
-BPF_HASH(requests_started_total, u64);
-BPF_HASH(requests_total, u64); // TODO(bwplotka): Add status code, and path.
+#define MAX_MSG_SIZE 1024
 
 struct addr_info_t {
   struct sockaddr *addr;
   int *addrlen;
 };
+
+struct write_buffer_t {
+  char msg[MAX_MSG_SIZE];
+};
+
+BPF_HASH(requests_started_total, u64);
+BPF_HASH(requests_total, u64); // TODO(bwplotka): Add status code, and path.
+
 
 // The set of file descriptors we are tracking. In our case those are connections from accept.
 BPF_HASH(tracked_fds, u64, bool);
@@ -46,12 +54,12 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
     // The file descriptor is the value returned from the syscall.
     u64 fd = (u64)args->ret; // Somehow return argument is long type in my kernel.
     if (fd < 0) {
+        active_sock_addr.delete(&id);
         return 0;
     }
 
     bool t = true;
     tracked_fds.update(&fd, &t);
-    bpf_trace_printk("accept %d\\n", fd);
 
     requests_started_total.increment((u64) bpf_get_current_cgroup_id());
 
@@ -67,7 +75,13 @@ TRACEPOINT_PROBE(syscalls, sys_enter_write) {
     if (tracked_fds.lookup(&fd) == NULL) {
         return 0;
     }
-    bpf_trace_printk("enter write %d\\n", fd);
+
+    // BPF programs are limited to a 512-byte stack. We allocate buffers on heap.
+    char *buf = malloc( sizeof(char) * ( args->count + 1 ) );
+    bpf_probe_read(&buf, args->count, args->buf); // (void*)
+
+    bpf_trace_printk("buf: %s\\n", &buffer->msg);
+
     // bpf_trace_printk("write");
     requests_total.increment((u64) bpf_get_current_cgroup_id());
     return 0;

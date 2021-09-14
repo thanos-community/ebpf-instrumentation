@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get -y --no-install-recommends install build-essential pbuilder aptitude git openssh-client ca-certificates
 
-RUN git clone --branch=v0.18.0 --depth=1 https://github.com/iovisor/bcc.git /root/bcc && \
+RUN git clone --branch=v0.21.0 --depth=1 https://github.com/iovisor/bcc.git /root/bcc && \
     git -C /root/bcc submodule update --init --recursive
 
 RUN cd /root/bcc && \
@@ -28,7 +28,7 @@ COPY --from=builder /root/bcc/libbcc_*.deb /tmp/libbcc.deb
 
 RUN dpkg -i /tmp/libbcc.deb
 
-RUN git clone --branch=file --depth=1 https://github.com/bwplotka/ebpf_exporter.git /root/ebpf_exporter && cd /root/ebpf_exporter && git reset --hard 232f8bc492c2ff2d5c87657be549f21ec2bec55e
+RUN git clone --branch=exp --depth=1 https://github.com/bwplotka/ebpf_exporter.git /root/ebpf_exporter && cd /root/ebpf_exporter && git reset --hard 06c74bf3500f4a8773c3268b9ce1fe8058ac3b72
 
 RUN cd /root/ebpf_exporter && GOPATH="" GOPROXY="off" GOFLAGS="-mod=vendor" go build -v ./cmd/ebpf_exporter/... && ls -l .
 

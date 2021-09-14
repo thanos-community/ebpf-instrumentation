@@ -18,3 +18,4 @@
 * https://stackoverflow.com/a/47991968/3220609
 * https://linux.die.net/man/2/accept4
 * http://www.scs.stanford.edu/06au-cs240/notes/l3.pdf
+* https://github.com/iovisor/bcc/blob/master/examples/networking/http_filter/http-parse-complete.c
