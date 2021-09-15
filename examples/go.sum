@@ -25,6 +25,8 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
+github.com/bwplotka/ebpf_exporter v1.2.4-0.20210915090327-7475bcaac653 h1:zl2nXwvMcQVwgqYJ9ElE+dJfVrYMyQBgfepKghEr03M=
+github.com/bwplotka/ebpf_exporter v1.2.4-0.20210915090327-7475bcaac653/go.mod h1:fRk09/MEkcIDB3Z5rZGUhr+qXu7LNYW2VsOT62SmlTA=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -32,8 +34,6 @@ github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/cilium/ebpf v0.4.0/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJXRs=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/cloudflare/ebpf_exporter v1.2.4-0.20210906222106-3828623ce797 h1:GAtJLSwaxNrLNkBVooyLzKI0y6KS/060tGy88R2nPH0=
-github.com/cloudflare/ebpf_exporter v1.2.4-0.20210906222106-3828623ce797/go.mod h1:fRk09/MEkcIDB3Z5rZGUhr+qXu7LNYW2VsOT62SmlTA=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
 github.com/containerd/cgroups v1.0.1/go.mod h1:0SJrPIenamHDcZhEcJMNBB85rHcUsw4f25ZfBiPYRkU=
@@ -56,7 +56,6 @@ github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFP
 github.com/edsrzf/mmap-go v1.0.0/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/efficientgo/e2e v0.11.2-0.20210910154705-fe343387488b h1:rjj3IP6pjrJnTuGXU/qhakzMZCcD+JEpg9XG809JWxM=
 github.com/efficientgo/e2e v0.11.2-0.20210910154705-fe343387488b/go.mod h1:vDnF4AAEZmO0mvyFIATeDJPFaSRM7ywaOnKd61zaSoE=
-github.com/efficientgo/tools/core v0.0.0-20210129205121-421d0828c9a6/go.mod h1:OmVcnJopJL8d3X3sSXTiypGoUSgFq1aDGmlrdi9dn/M=
 github.com/efficientgo/tools/core v0.0.0-20210829154005-c7bad8450208 h1:jIALuFymwBqVsF32JhgzVsbCB6QsWvXqhetn8QgyrZ4=
 github.com/efficientgo/tools/core v0.0.0-20210829154005-c7bad8450208/go.mod h1:OmVcnJopJL8d3X3sSXTiypGoUSgFq1aDGmlrdi9dn/M=
 github.com/envoyproxy/go-control-plane v0.6.9/go.mod h1:SBwIajubJHhxtWwsL9s8ss4safvEdbitLhGGK48rN6g=

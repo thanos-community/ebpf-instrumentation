@@ -28,7 +28,7 @@ COPY --from=builder /root/bcc/libbcc_*.deb /tmp/libbcc.deb
 
 RUN dpkg -i /tmp/libbcc.deb
 
-RUN git clone --branch=exp --depth=1 https://github.com/bwplotka/ebpf_exporter.git /root/ebpf_exporter && cd /root/ebpf_exporter && git reset --hard 06c74bf3500f4a8773c3268b9ce1fe8058ac3b72
+RUN git clone --branch=exp --depth=1 https://github.com/bwplotka/ebpf_exporter.git /root/ebpf_exporter && cd /root/ebpf_exporter && git reset --hard f1a8c04d38d66845f8f63aa676515d406800c1a9
 
 RUN cd /root/ebpf_exporter && GOPATH="" GOPROXY="off" GOFLAGS="-mod=vendor" go build -v ./cmd/ebpf_exporter/... && ls -l .
 
