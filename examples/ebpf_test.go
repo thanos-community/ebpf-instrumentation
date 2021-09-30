@@ -61,7 +61,6 @@ func TestExample(t *testing.T) {
 	// Step 3.
 	testutil.Ok(t, e2einteractive.OpenInBrowser("http://"+p.Endpoint("http")+"/graphsdfsdf")) // Not found, should give 400.
 	testutil.Ok(t, e2einteractive.RunUntilEndpointHit())
-
 }
 
 func eBPFExporterConfig(t *testing.T, pidToMonitor string) config.Config {
