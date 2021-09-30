@@ -57,7 +57,6 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
     if (pid != $(PID)) {
         return 0;
     }
-    bpf_trace_printk("accept exit!\\n");
 
     struct addr_info_t* addr_info = active_sock_addr.lookup(&id);
     if (addr_info == NULL) {
